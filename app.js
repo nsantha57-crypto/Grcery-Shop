@@ -150,20 +150,21 @@ function loadSettingsUI() {
         preview.src = s.image;
         preview.classList.remove('hidden');
         
-        // Display Mode img
+        // Display Mode img/bg
+        document.getElementById('shop-info-display').style.backgroundImage = `url('${s.image}')`;
         const displayImg = document.getElementById('display-shop-img');
         if (displayImg) {
-            displayImg.src = s.image;
-            displayImg.classList.remove('hidden');
+            displayImg.classList.add('hidden'); // We use background image instead
         }
         
         // Nav logo
         document.getElementById('nav-shop-img').src = s.image;
     } else {
+        document.getElementById('shop-info-display').style.backgroundImage = 'none';
         document.getElementById('shop-image-preview').classList.add('hidden');
         const displayImg = document.getElementById('display-shop-img');
         if (displayImg) displayImg.classList.add('hidden');
-        document.getElementById('nav-shop-img').src = 'default-shop.png';
+        document.getElementById('nav-shop-img').src = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 35 C 40 10, 60 10, 50 35 Z' fill='%23E91E63' transform='rotate(0 50 50)'/%3E%3Cpath d='M50 35 C 40 10, 60 10, 50 35 Z' fill='%23E91E63' transform='rotate(45 50 50)'/%3E%3Cpath d='M50 35 C 40 10, 60 10, 50 35 Z' fill='%23E91E63' transform='rotate(90 50 50)'/%3E%3Cpath d='M50 35 C 40 10, 60 10, 50 35 Z' fill='%23E91E63' transform='rotate(135 50 50)'/%3E%3Cpath d='M50 35 C 40 10, 60 10, 50 35 Z' fill='%23E91E63' transform='rotate(180 50 50)'/%3E%3Cpath d='M50 35 C 40 10, 60 10, 50 35 Z' fill='%23E91E63' transform='rotate(225 50 50)'/%3E%3Cpath d='M50 35 C 40 10, 60 10, 50 35 Z' fill='%23E91E63' transform='rotate(270 50 50)'/%3E%3Cpath d='M50 35 C 40 10, 60 10, 50 35 Z' fill='%23E91E63' transform='rotate(315 50 50)'/%3E%3Ccircle cx='50' cy='50' r='15' fill='%23FFC107' /%3E%3C/svg%3E";
     }
     
     if (s.shopName) {
@@ -197,13 +198,17 @@ function deleteShopInfo() {
     }
 }
 
+let selectedImageBase64 = null;
+
 function previewImage(event) {
     const file = event.target.files[0];
     if (file) {
         const reader = new FileReader();
         reader.onload = function(e) {
+            selectedImageBase64 = e.target.result;
             const preview = document.getElementById('shop-image-preview');
-            preview.src = e.target.result;
+            preview.src = selectedImageBase64;
+            preview.style.display = 'block';
             preview.classList.remove('hidden');
         }
         reader.readAsDataURL(file);
@@ -211,15 +216,14 @@ function previewImage(event) {
 }
 
 function saveSettings() {
-    const imgPreviewSrc = document.getElementById('shop-image-preview').src;
-    
     appState.settings.shopName = document.getElementById('shop-name').value;
     appState.settings.address = document.getElementById('shop-address').value;
     appState.settings.regNo = document.getElementById('shop-reg-no').value;
     appState.settings.phone = document.getElementById('shop-phone').value;
     
-    if (imgPreviewSrc && imgPreviewSrc !== window.location.href && !document.getElementById('shop-image-preview').classList.contains('hidden')) {
-        appState.settings.image = imgPreviewSrc;
+    if (selectedImageBase64) {
+        appState.settings.image = selectedImageBase64;
+        selectedImageBase64 = null; // reset
     }
 
     const newPwd = document.getElementById('new-password').value;
@@ -370,6 +374,83 @@ function renderPosItems(searchTerm = '') {
         `;
         grid.innerHTML += card;
     });
+
+    // Populate dropdown
+    const select = document.getElementById('pos-item-select');
+    if (select) {
+        select.innerHTML = '<option value="">-- භාණ්ඩයක් තෝරන්න --</option>';
+        appState.inventory.forEach(item => {
+            select.innerHTML += `<option value="${item.id}">${item.name} (Rs. ${item.sellPrice}) - තොගය: ${item.qty} ${item.unit}</option>`;
+        });
+    }
+}
+
+function posItemSelected() {
+    const id = document.getElementById('pos-item-select').value;
+    const item = appState.inventory.find(i => i.id === id);
+    const unitSpan = document.getElementById('pos-item-unit');
+    if (item && unitSpan) {
+        unitSpan.textContent = item.unit;
+    } else if (unitSpan) {
+        unitSpan.textContent = 'ඒකක';
+    }
+}
+
+function addSelectedPosItem() {
+    const id = document.getElementById('pos-item-select').value;
+    const qtyInput = document.getElementById('pos-item-qty');
+    const qty = parseFloat(qtyInput.value);
+
+    if (!id) {
+        showToast('කරුණාකර භාණ්ඩයක් තෝරන්න!', 'warning');
+        return;
+    }
+    if (!qty || qty <= 0) {
+        showToast('නිවැරදි ප්‍රමාණයක් ඇතුළත් කරන්න!', 'warning');
+        return;
+    }
+
+    const item = appState.inventory.find(i => i.id === id);
+    if (!item) return;
+
+    if (item.qty <= 0) {
+        showToast('මෙම භාණ්ඩයේ තොග අවසන් වී ඇත!', 'error');
+        return;
+    }
+
+    const existingCartItem = currentCart.find(c => c.id === id);
+    let newTotalQty = qty;
+    if (existingCartItem) {
+        newTotalQty += existingCartItem.cartQty;
+    }
+
+    if (newTotalQty > item.qty) {
+        showToast('පවතින තොගයට වඩා එකතු කළ නොහැක!', 'warning');
+        return;
+    }
+
+    if (existingCartItem) {
+        existingCartItem.cartQty = newTotalQty;
+        existingCartItem.subTotal = existingCartItem.cartQty * existingCartItem.sellPrice;
+    } else {
+        currentCart.push({
+            id: item.id,
+            code: item.code,
+            name: item.name,
+            sellPrice: item.sellPrice,
+            buyPrice: item.buyPrice,
+            unit: item.unit,
+            cartQty: qty,
+            subTotal: qty * item.sellPrice
+        });
+    }
+    
+    // Reset inputs
+    document.getElementById('pos-item-select').value = '';
+    qtyInput.value = '1';
+    posItemSelected();
+    updateCartUI();
+    showToast('බිල්පතට එකතු කරන ලදී!', 'success');
 }
 
 function filterPosItems() {
