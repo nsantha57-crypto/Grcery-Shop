@@ -454,14 +454,28 @@ input:focus, select:focus, textarea:focus {
     .receipt-footer { text-align: center; margin-top: 15px; }
 }
 
+.mobile-menu-btn { display: none; }
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     #main-app { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; flex-direction: row; align-items: center; justify-content: space-between; padding: 10px; }
-    .shop-brand { padding: 0; border: none; display: flex; align-items: center; gap: 10px; }
+    .sidebar { width: 100%; height: auto; flex-direction: column; padding: 10px; z-index: 50; }
+    .shop-brand { padding: 0; border: none; display: flex; align-items: center; justify-content: space-between; width: 100%; }
     .shop-brand img { width: 40px; height: 40px; margin: 0; }
-    .shop-brand h3 { display: none; }
-    .nav-links { display: none; /* In a real app we'd have a hamburger menu */ }
+    .shop-brand h3 { display: inline-block; font-size: 1.2rem; margin: 0; flex: 1; text-align: left; padding-left: 15px; }
+    .mobile-menu-btn { display: block; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+    .nav-links { display: none; width: 100%; padding: 10px 0 0 0; }
+    .nav-links.show-mobile { display: block; }
+    .nav-links li a { padding: 10px 15px; border-radius: 6px; margin-bottom: 5px; }
+    
     .pos-container { grid-template-columns: 1fr; height: auto; }
-    .pos-cart { min-height: 400px; }
+    .pos-products { max-height: 400px; }
+    .pos-cart { min-height: 350px; }
+    .form-grid { grid-template-columns: 1fr; }
+    
+    .data-table { font-size: 0.85rem; }
+    .data-table th, .data-table td { padding: 8px; }
+    
+    .view-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .view-header button { width: 100%; }
 }

@@ -97,12 +97,25 @@ function showView(viewId) {
     const navLink = document.getElementById(`link-${viewId}`);
     if (navLink) navLink.classList.add('active');
 
+    // Hide mobile menu if open
+    const navLinksList = document.getElementById('nav-links');
+    if (navLinksList) {
+        navLinksList.classList.remove('show-mobile');
+    }
+
     // View specific init
     if (viewId === 'inventory-view') renderInventory();
     if (viewId === 'sales-view') { renderPosItems(); updateCartUI(); }
     if (viewId === 'bills-view') renderBills();
     if (viewId === 'supplier-view') renderSupplierBills();
     if (viewId === 'reports-view') generateReport();
+}
+
+function toggleMobileMenu() {
+    const navLinksList = document.getElementById('nav-links');
+    if (navLinksList) {
+        navLinksList.classList.toggle('show-mobile');
+    }
 }
 
 // Toast Notifications
@@ -118,19 +131,69 @@ function showToast(message, type = 'success') {
 // Settings
 function loadSettingsUI() {
     const s = appState.settings;
+    
+    // Form Inputs
     document.getElementById('shop-name').value = s.shopName || '';
     document.getElementById('shop-address').value = s.address || '';
     document.getElementById('shop-reg-no').value = s.regNo || '';
     document.getElementById('shop-phone').value = s.phone || '';
     
+    // Display Mode
+    document.getElementById('display-shop-name').textContent = s.shopName || 'කඩයේ නම යොදා නැත';
+    document.getElementById('display-shop-address').textContent = s.address || '-';
+    document.getElementById('display-shop-reg').textContent = s.regNo || '-';
+    document.getElementById('display-shop-phone').textContent = s.phone || '-';
+
     if (s.image) {
+        // Form preview
         const preview = document.getElementById('shop-image-preview');
         preview.src = s.image;
         preview.classList.remove('hidden');
+        
+        // Display Mode img
+        const displayImg = document.getElementById('display-shop-img');
+        if (displayImg) {
+            displayImg.src = s.image;
+            displayImg.classList.remove('hidden');
+        }
+        
+        // Nav logo
         document.getElementById('nav-shop-img').src = s.image;
+    } else {
+        document.getElementById('shop-image-preview').classList.add('hidden');
+        const displayImg = document.getElementById('display-shop-img');
+        if (displayImg) displayImg.classList.add('hidden');
+        document.getElementById('nav-shop-img').src = 'default-shop.png';
     }
+    
     if (s.shopName) {
         document.getElementById('nav-shop-name').textContent = s.shopName;
+    }
+
+    // Always show display mode, hide form mode
+    document.getElementById('shop-info-display').classList.remove('hidden');
+    document.getElementById('shop-info-form').classList.add('hidden');
+}
+
+function editShopInfo() {
+    document.getElementById('shop-info-display').classList.add('hidden');
+    document.getElementById('shop-info-form').classList.remove('hidden');
+}
+
+function cancelEditShopInfo() {
+    loadSettingsUI(); // reset form back to saved state and show display
+}
+
+function deleteShopInfo() {
+    if (confirm('ඔබට කඩයේ තොරතුරු සියල්ල මකා දැමීමට අවශ්‍ය බව විශ්වාසද?')) {
+        appState.settings.shopName = '';
+        appState.settings.address = '';
+        appState.settings.regNo = '';
+        appState.settings.phone = '';
+        appState.settings.image = '';
+        saveData();
+        loadSettingsUI();
+        showToast('තොරතුරු මකා දමන ලදී!', 'success');
     }
 }
 
@@ -155,7 +218,7 @@ function saveSettings() {
     appState.settings.regNo = document.getElementById('shop-reg-no').value;
     appState.settings.phone = document.getElementById('shop-phone').value;
     
-    if (imgPreviewSrc && imgPreviewSrc !== window.location.href) {
+    if (imgPreviewSrc && imgPreviewSrc !== window.location.href && !document.getElementById('shop-image-preview').classList.contains('hidden')) {
         appState.settings.image = imgPreviewSrc;
     }
 
