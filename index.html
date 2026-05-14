@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Grocery Management</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Notification Toast -->
+        <div id="toast" class="toast hidden"></div>
+
+        <!-- Login View -->
+        <div id="login-view" class="view active">
+            <div class="login-card">
+                <div class="logo-container">
+                    <i class="fa-solid fa-store fa-3x"></i>
+                </div>
+                <h2>ආයුබෝවන්!</h2>
+                <p>කරුණාකර මුරපදය ඇතුළත් කරන්න</p>
+                <input type="password" id="login-password" placeholder="මුරපදය (Password)">
+                <button onclick="login()">ඇතුල් වන්න (Login)</button>
+            </div>
+        </div>
+
+        <!-- Main Application (Hidden by default) -->
+        <div id="main-app" class="hidden">
+            <!-- Sidebar Navigation -->
+            <nav class="sidebar">
+                <div class="shop-brand">
+                    <img id="nav-shop-img" src="default-shop.png" alt="Shop" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2NjYyI+PHBhdGggZD0iTTEyIDJMMiAxMmgydjhoOHYtNmg0djZoOHYtOGgyTDEyIDJ6Ii8+PC9zdmc+'">
+                    <h3 id="nav-shop-name">සිල්ලර කඩය</h3>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#" onclick="showView('home-view')" id="link-home-view"><i class="fa-solid fa-house"></i> මුල් පිටුව</a></li>
+                    <li><a href="#" onclick="showView('sales-view')" id="link-sales-view"><i class="fa-solid fa-cart-shopping"></i> විකුණුම් (Sales) <span id="low-stock-badge" class="badge hidden">!</span></a></li>
+                    <li><a href="#" onclick="showView('inventory-view')" id="link-inventory-view"><i class="fa-solid fa-box-open"></i> භාණ්ඩ (Inventory)</a></li>
+                    <li><a href="#" onclick="showView('bills-view')" id="link-bills-view"><i class="fa-solid fa-file-invoice"></i> බිල්පත් (Bills)</a></li>
+                    <li><a href="#" onclick="showView('supplier-view')" id="link-supplier-view"><i class="fa-solid fa-truck-field"></i> සැපයුම්කරුවන් (Suppliers)</a></li>
+                    <li><a href="#" onclick="showView('reports-view')" id="link-reports-view"><i class="fa-solid fa-chart-line"></i> වාර්තා (Reports)</a></li>
+                    <li><a href="#" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> පිටවීම (Logout)</a></li>
+                </ul>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="content">
+                
+                <!-- Home / Settings View -->
+                <div id="home-view" class="view">
+                    <header class="view-header">
+                        <h2>කඩයේ විස්තර (Shop Details)</h2>
+                    </header>
+                    <div class="card settings-card">
+                        <div class="form-group image-upload">
+                            <label for="shop-image">කඩයේ පින්තූරය (Shop Image):</label>
+                            <input type="file" id="shop-image" accept="image/*" onchange="previewImage(event)">
+                            <img id="shop-image-preview" src="" alt="Preview" class="hidden">
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>කඩයේ නම (Shop Name):</label>
+                                <input type="text" id="shop-name">
+                            </div>
+                            <div class="form-group">
+                                <label>ලිපිනය (Address):</label>
+                                <input type="text" id="shop-address">
+                            </div>
+                            <div class="form-group">
+                                <label>ලියාපදිංචි අංකය (Reg. No):</label>
+                                <input type="text" id="shop-reg-no">
+                            </div>
+                            <div class="form-group">
+                                <label>දුරකථන අංකය (Phone No):</label>
+                                <input type="text" id="shop-phone">
+                            </div>
+                        </div>
+                        <hr class="divider">
+                        <h3>ආරක්ෂාව (Security)</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>නව මුරපදය (New Password):</label>
+                                <input type="password" id="new-password">
+                            </div>
+                        </div>
+                        <button class="btn-primary" onclick="saveSettings()">තොරතුරු සුරකින්න (Save Settings)</button>
+                    </div>
+                </div>
+
+                <!-- Inventory View -->
+                <div id="inventory-view" class="view hidden">
+                    <header class="view-header">
+                        <h2>භාණ්ඩ කළමනාකරණය (Inventory)</h2>
+                        <button class="btn-primary" onclick="openItemModal()"><i class="fa-solid fa-plus"></i> නව භාණ්ඩයක්</button>
+                    </header>
+                    
+                    <div class="card table-card">
+                        <div class="search-bar">
+                            <input type="text" id="search-inventory" placeholder="භාණ්ඩය සොයන්න (Search by name or code)..." onkeyup="renderInventory()">
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>කේතය</th>
+                                        <th>නම</th>
+                                        <th>මිලදී ගත් මිල</th>
+                                        <th>විකුණුම් මිල</th>
+                                        <th>ප්‍රමාණය</th>
+                                        <th>කල් ඉකුත් වන දිනය</th>
+                                        <th>ක්‍රියා</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventory-tbody">
+                                    <!-- Inventory rows will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales View -->
+                <div id="sales-view" class="view hidden">
+                    <header class="view-header">
+                        <h2>විකුණුම් (Sales POS)</h2>
+                    </header>
+                    
+                    <div class="pos-container">
+                        <!-- POS Left: Product Selection -->
+                        <div class="pos-products card">
+                            <div class="search-bar">
+                                <input type="text" id="pos-search" placeholder="කේතය හෝ නම (Code or Name)" onkeyup="filterPosItems()">
+                            </div>
+                            <!-- Low Stock Alert -->
+                            <div id="low-stock-alert" class="alert-warning hidden">
+                                <i class="fa-solid fa-triangle-exclamation"></i> සමහර භාණ්ඩ ප්‍රමාණය අඩු වී ඇත!
+                            </div>
+                            <div class="pos-item-grid" id="pos-item-grid">
+                                <!-- POS Items -->
+                            </div>
+                        </div>
+
+                        <!-- POS Right: Cart & Checkout -->
+                        <div class="pos-cart card">
+                            <h3>බිල්පත (Current Bill)</h3>
+                            <div class="form-group">
+                                <input type="text" id="customer-name" placeholder="පාරිභෝගික නම (Customer Name)">
+                            </div>
+                            <div class="cart-items" id="cart-items">
+                                <!-- Cart Items -->
+                            </div>
+                            <div class="cart-summary">
+                                <div class="summary-row">
+                                    <span>එකතුව (Total):</span>
+                                    <span class="total-amount">Rs. <span id="cart-total">0.00</span></span>
+                                </div>
+                                <button class="btn-success btn-large" onclick="checkout()"><i class="fa-solid fa-money-bill-wave"></i> බිල් කරන්න (Checkout)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bills History View -->
+                <div id="bills-view" class="view hidden">
+                    <header class="view-header">
+                        <h2>විකුණුම් බිල්පත් (Sales Bills)</h2>
+                    </header>
+                    <div class="card table-card">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>බිල්පත් අංකය</th>
+                                        <th>පාරිභෝගික නම</th>
+                                        <th>දිනය හා වේලාව</th>
+                                        <th>එකතුව (Rs)</th>
+                                        <th>ක්‍රියා</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bills-tbody">
+                                    <!-- Bills rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supplier Bills View -->
+                <div id="supplier-view" class="view hidden">
+                    <header class="view-header">
+                        <h2>සැපයුම්කරු බිල්පත් (Supplier Purchases)</h2>
+                        <button class="btn-primary" onclick="openSupplierModal()"><i class="fa-solid fa-plus"></i> නව බිල්පතක්</button>
+                    </header>
+                    <div class="card table-card">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>බිල්පත් අංකය</th>
+                                        <th>සැපයුම්කරු / කඩය</th>
+                                        <th>දිනය</th>
+                                        <th>මුළු මුදල (Rs)</th>
+                                        <th>ක්‍රියා</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supplier-tbody">
+                                    <!-- Supplier Bills rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports View -->
+                <div id="reports-view" class="view hidden">
+                    <header class="view-header">
+                        <h2>මාසික ලාභාංශ වාර්තාව (Monthly Profit Report)</h2>
+                    </header>
+                    <div class="report-cards">
+                        <div class="stat-card">
+                            <div class="stat-icon bg-blue"><i class="fa-solid fa-chart-bar"></i></div>
+                            <div class="stat-info">
+                                <p>මුළු විකුණුම් (Total Sales)</p>
+                                <h3 id="report-total-sales">Rs. 0.00</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon bg-green"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                            <div class="stat-info">
+                                <p>මුළු ලාභය (Total Profit)</p>
+                                <h3 id="report-total-profit">Rs. 0.00</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+
+    <!-- Add/Edit Item Modal -->
+    <div id="item-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('item-modal')">&times;</span>
+            <h2 id="item-modal-title">නව භාණ්ඩයක් එක් කරන්න</h2>
+            <form id="item-form" onsubmit="saveItem(event)">
+                <input type="hidden" id="item-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>කේත අංකය (Code): *</label>
+                        <input type="text" id="item-code" required>
+                    </div>
+                    <div class="form-group">
+                        <label>භාණ්ඩයේ නම (Name): *</label>
+                        <input type="text" id="item-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>මිලදී ගත් මිල (Buying Price): *</label>
+                        <input type="number" id="item-buy-price" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>විකුණුම් මිල (Selling Price): *</label>
+                        <input type="number" id="item-sell-price" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ලබාගත් ප්‍රමාණය (Quantity): *</label>
+                        <input type="number" id="item-qty" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>ඒකකය (Unit):</label>
+                        <select id="item-unit">
+                            <option value="Kg">Kg</option>
+                            <option value="gr">gr</option>
+                            <option value="unit">unit</option>
+                            <option value="lit.">lit.</option>
+                            <option value="packs">packs</option>
+                            <option value="bottle">bottle</option>
+                            <option value="other">other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>ලබාගත් දිනය (Received Date):</label>
+                        <input type="date" id="item-recv-date">
+                    </div>
+                    <div class="form-group">
+                        <label>නිෂ්පාදිත දිනය (Mfd Date):</label>
+                        <input type="date" id="item-mfd-date">
+                    </div>
+                    <div class="form-group">
+                        <label>කල් ඉකුත් වන දිනය (Exp Date):</label>
+                        <input type="date" id="item-exp-date">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('item-modal')">අවලංගු කරන්න</button>
+                    <button type="submit" class="btn-primary">සුරකින්න (Save)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Supplier Bill Modal -->
+    <div id="supplier-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('supplier-modal')">&times;</span>
+            <h2>නව සැපයුම්කරු බිල්පතක්</h2>
+            <form id="supplier-form" onsubmit="saveSupplierBill(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>සැපයුම්කරු / කඩයේ නම: *</label>
+                        <input type="text" id="supp-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>දුරකථන අංකය:</label>
+                        <input type="text" id="supp-phone">
+                    </div>
+                    <div class="form-group">
+                        <label>දිනය: *</label>
+                        <input type="date" id="supp-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>මුළු මුදල (Total Amount): *</label>
+                        <input type="number" id="supp-amount" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>භාණ්ඩ විස්තර (Items Details):</label>
+                        <textarea id="supp-details" rows="3" placeholder="භාණ්ඩ ප්‍රමාණය ආදිය මෙහි සටහන් කරන්න..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('supplier-modal')">අවලංගු කරන්න</button>
+                    <button type="submit" class="btn-primary">සුරකින්න (Save)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Print Bill Modal (Hidden visually, used for printing) -->
+    <div id="print-area" class="print-area hidden">
+        <div class="receipt">
+            <div class="receipt-header">
+                <h2 id="print-shop-name">Shop Name</h2>
+                <p id="print-shop-address">Address</p>
+                <p id="print-shop-phone">Phone</p>
+                <p id="print-shop-reg">Reg No</p>
+                <hr>
+                <p>බිල්පත් අංකය: <span id="print-bill-no"></span></p>
+                <p>දිනය: <span id="print-date"></span></p>
+                <p>පාරිභෝගිකයා: <span id="print-customer"></span></p>
+            </div>
+            <hr>
+            <table class="receipt-table">
+                <thead>
+                    <tr>
+                        <th>භාණ්ඩය</th>
+                        <th>ප්‍රම.</th>
+                        <th>මිල</th>
+                        <th>මුදල</th>
+                    </tr>
+                </thead>
+                <tbody id="print-items">
+                </tbody>
+            </table>
+            <hr>
+            <div class="receipt-total">
+                <strong>එකතුව: Rs. <span id="print-total"></span></strong>
+            </div>
+            <hr>
+            <p class="receipt-footer">ස්තූතියි! නැවත එන්න.</p>
+        </div>
+    </div>
+
+    <!-- Print Supplier Bill Modal -->
+    <div id="print-supp-area" class="print-area hidden">
+        <div class="receipt">
+            <div class="receipt-header">
+                <h2>සැපයුම්කරු බිල්පත (Purchase Bill)</h2>
+                <hr>
+                <p>බිල්පත් අංකය: <span id="print-supp-no"></span></p>
+                <p>දිනය: <span id="print-supp-date"></span></p>
+                <p>සැපයුම්කරු: <span id="print-supp-name"></span></p>
+                <p>දුරකථනය: <span id="print-supp-phone"></span></p>
+            </div>
+            <hr>
+            <div class="receipt-details">
+                <p><strong>විස්තර:</strong> <br><span id="print-supp-details" style="white-space: pre-wrap;"></span></p>
+            </div>
+            <hr>
+            <div class="receipt-total">
+                <strong>මුළු මුදල: Rs. <span id="print-supp-total"></span></strong>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
